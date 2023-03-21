@@ -46,6 +46,11 @@ type OpenAIResponse struct {
 }
 
 func main() {
+    go func() {
+	mux := http.NewServeMux()
+	mux.Handle("/", http.RedirectHandler("https://gpt.itislee.com", 302))
+	http.ListenAndServe(":80", mux)
+    }()
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         if r.Method == "GET" {
             t, _ := template.ParseFiles("index.html")
@@ -59,7 +64,7 @@ func main() {
             //json.Unmarshal(body, &req)
 
             client := &http.Client{}
-	    var aiReq OpenAIRequest 
+	    var aiReq OpenAIRequest
 	    aiReq.Model = "gpt-3.5-turbo"
 	    aiReq.Temperature = 0.7
 
@@ -71,7 +76,7 @@ func main() {
 
             httpReq, _ := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer([]byte(data)))
             httpReq.Header.Set("Content-Type", "application/json")
-            httpReq.Header.Set("Authorization", "Bearer xxx")
+            httpReq.Header.Set("Authorization", "Bearer sk-XXX")
 
             resp, _ := client.Do(httpReq)
             defer resp.Body.Close()
@@ -98,5 +103,6 @@ func main() {
         }
     })
 
-    http.ListenAndServe(":8080", nil)
+    http.ListenAndServeTLS(":443", "gpt.itislee.com_nginx/gpt.itislee.com_bundle.crt",
+    "gpt.itislee.com_nginx/gpt.itislee.com.key", nil)
 }
